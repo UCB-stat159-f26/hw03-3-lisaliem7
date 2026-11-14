@@ -1,6 +1,7 @@
+import pandas as pd
 import pytest
 from mock_data import FEMALE_JS, MALE_JS
-from tennisage.clean import _extract_matches, _rows_to_frame
+from tennisage.clean import _extract_matches, _rows_to_frame, _opponent_age
 
 
 def test_extract_matches_female_returns_three_rows():
@@ -29,3 +30,19 @@ def test_rows_to_frame_has_expected_columns():
 def test_rows_to_frame_male_result_values():
     df = _rows_to_frame(_extract_matches(MALE_JS))
     assert df["result"].tolist() == ["L", "L", "W"]
+
+
+def _frame_with_dates(js_text):
+    df = _rows_to_frame(_extract_matches(js_text))
+    df["date"] = pd.to_datetime(df["date"], format="%Y%m%d")
+    return df
+
+
+def test_opponent_age_from_birthdate_for_women():
+    ages = _opponent_age(_frame_with_dates(FEMALE_JS))
+    assert ages.iloc[0] == pytest.approx(18.78, abs=0.05)
+
+
+def test_opponent_age_used_directly_for_men():
+    ages = _opponent_age(_frame_with_dates(MALE_JS))
+    assert ages.iloc[0] == pytest.approx(22.264, abs=0.01)
