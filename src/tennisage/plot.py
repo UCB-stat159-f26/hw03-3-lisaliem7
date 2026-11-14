@@ -12,3 +12,19 @@ def _check_columns(df):
         raise ValueError(
             f"DataFrame is missing columns {missing}. Build it with get_player_matches()."
         )
+
+
+def _scatter_by_result(ax, df):
+    """Draw wins and losses as differently colored points."""
+    for won, color, label in [(True, WIN_COLOR, "Win"), (False, LOSS_COLOR, "Loss")]:
+        subset = df[df["won"] == won]
+        ax.scatter(subset["player_age"], subset["age_diff"],
+                   c=color, label=label, alpha=0.7, s=25)
+
+
+def _style_axes(ax):
+    """Add the zero line, axis labels and legend."""
+    ax.axhline(0, color="gray", linewidth=0.8)
+    ax.set_xlabel("Player's age")
+    ax.set_ylabel("Player's age minus opponent's age (years)")
+    ax.legend(title="Result")
