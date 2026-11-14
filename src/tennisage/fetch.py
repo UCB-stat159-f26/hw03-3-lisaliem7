@@ -29,3 +29,13 @@ def _download_birthdate(slug):
     """Return the player's own birthdate from their tennisabstract page."""
     response = requests.get(PAGE_URL.format(slug=slug), timeout=15)
     return _parse_birthdate(response.text)
+
+
+def get_player_matches(player_name):
+    """Return a clean DataFrame of a player's career matches.
+
+    Example: get_player_matches("Serena Williams")
+    """
+    slug = _name_to_slug(player_name)
+    career_js = _download_career_js(slug)
+    return _build_career_frame(career_js, _download_birthdate(slug))
