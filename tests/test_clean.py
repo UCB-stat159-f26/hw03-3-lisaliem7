@@ -1,7 +1,7 @@
 import pandas as pd
 import pytest
 from mock_data import FEMALE_JS, MALE_JS
-from tennisage.clean import _extract_matches, _rows_to_frame, _opponent_age
+from tennisage.clean import _extract_matches, _rows_to_frame, _opponent_age, _parse_birthdate
 
 
 def test_extract_matches_female_returns_three_rows():
@@ -46,3 +46,13 @@ def test_opponent_age_from_birthdate_for_women():
 def test_opponent_age_used_directly_for_men():
     ages = _opponent_age(_frame_with_dates(MALE_JS))
     assert ages.iloc[0] == pytest.approx(22.264, abs=0.01)
+
+
+def test_parse_birthdate_reads_dob_line():
+    page = "<script>var name = 'x'; var dob = 19810926; var y = 2;</script>"
+    assert _parse_birthdate(page) == pd.Timestamp("1981-09-26")
+
+
+def test_parse_birthdate_missing_raises():
+    with pytest.raises(ValueError):
+        _parse_birthdate("<html>no birthdate here</html>")
