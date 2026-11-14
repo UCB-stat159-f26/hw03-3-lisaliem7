@@ -1,51 +1,130 @@
 # Tennis Age Gap
 
-Get a tennis player's career matches from [tennisabstract.com](https://www.tennisabstract.com)
-and plot the age gap between the player and each opponent, colored by win or loss.
+A Python package that retrieves a tennis player's career match records from Tennis Abstract and plots the player's age relative to each opponent.
 
-## Install
+Created for UC Berkeley STAT 159 HW3. Serena Williams and Rafael Nadal are the featured examples, but the package works for other players on the site.
+
+## Installation
+
+Install directly from GitHub:
 
 ```bash
 pip install git+https://github.com/UCB-stat159-f26/hw03-3-lisaliem7.git
 ```
 
-## Usage
+The repository is private, so installation requires GitHub authentication with access to it. Do not put access tokens in scripts.
+
+## Public functions
+
+### Retrieve matches
 
 ```python
-from tennisage import get_player_matches, plot_age_gap
+from tennisage import get_player_matches
 
-serena = get_player_matches("Serena Williams")   # accepts "serena williams" or "SerenaWilliams"
-fig = plot_age_gap(serena)
-
-rafa = get_player_matches("Rafael Nadal")
-plot_age_gap(rafa)
-
-get_player_matches("GastonSanchez")   # raises ValueError: No player found ...
+serena = get_player_matches("Serena Williams")
+serena.head()
 ```
 
-## Functions
+Spaced and CamelCase names are supported:
 
-- `get_player_matches(player_name)`: returns a DataFrame with columns
-  `date`, `opponent`, `player_age`, `opp_age`, `age_diff`, `won`.
-- `plot_age_gap(df)`: scatter plot of `player_age` (x) vs. `age_diff` (y), colored by result.
+```python
+serena = get_player_matches("serena williams")
+serena = get_player_matches("Serena Williams")
+serena = get_player_matches("SerenaWilliams")
 
-## Running the tests
+rafa = get_player_matches("Rafael Nadal")
+```
+
+An unknown player produces a meaningful error:
+
+```python
+get_player_matches("GastonSanchez")
+# ValueError: No player found for 'GastonSanchez'. Check the spelling, e.g. 'Serena Williams'.
+```
+
+The returned data frame contains:
+
+| Column | Meaning |
+|---|---|
+| `date` | Match date supplied by Tennis Abstract |
+| `opponent` | Opponent's name |
+| `player_age` | Player's age in decimal years |
+| `opp_age` | Opponent's age in decimal years |
+| `age_diff` | Player age minus opponent age |
+| `won` | True for a win, False for a loss |
+
+Ages derived from birth dates use elapsed days divided by 365.25. Opponent ages that the site already gives as numbers are used as they are. Rows without a usable opponent age are dropped.
+
+### Plot matches
+
+```python
+from tennisage import plot_age_gap
+
+fig = plot_age_gap(serena)
+```
+
+The horizontal axis shows the player's age. The vertical axis shows player age minus opponent age:
+
+- Positive values: the player was older.
+- Negative values: the player was younger.
+- Zero: the players were the same age.
+
+Blue points are wins and orange points are losses. The function returns a matplotlib figure, which can be saved like this:
+
+```python
+fig.savefig("serena_plot.png", dpi=150)
+```
+
+If the data frame did not come from `get_player_matches`, the function raises a `ValueError`.
+
+## Serena Williams example
+
+![Serena Williams age gap plot](images/serena_example.png)
+
+The data frame has 1,038 matches dated October 30, 1995, through August 29, 2022. These are the records the website returned when I ran the package, not a verified count of every match she played.
+
+## Rafael Nadal example
+
+![Rafael Nadal age gap plot](images/rafa_example.png)
+
+The data frame has 1,096 matches dated September 10, 2001, through October 10, 2016. His file ends well before his career did, which is described below.
+
+## Data retrieval and limitations
+
+The package turns a player's name into the format the website uses, so "serena williams" becomes "SerenaWilliams". It downloads that player's career file and reads the list of matches inside it. The career file does not contain the player's own birth date, so the package reads it from the player's page on the same site.
+
+Women's files store each opponent's birth date, and men's files store each opponent's age. The package checks which format each row uses and converts both into an age in years.
+
+Coverage varies between players. Serena Williams's file runs through her retirement in 2022, but Rafael Nadal's file stops in October 2016. The package does not check whether a file contains every match a player has ever played. The dates may be tournament dates rather than the exact day of each match, so the ages are approximate. If the website changes its format, the retrieval code will need to be updated.
+
+## Testing
+
+Install the testing tools and run the suite from the repository root:
 
 ```bash
 pip install -e ".[test]"
 pytest
 ```
 
-The tests use mock career data and never contact the live website.
+The automated tests use small mock career files for a female player and a male player, so they do not contact the live website. They cover parsing the match list, selecting columns, opponent ages in both formats, reading a birth date, building the final data frame, converting names, and the plot's labels and input check. The functions that download data were checked by hand against the live site.
 
-## Personal Reflections
+## Personal reflections
 
-**Hardest part.** The hardest part was getting set up before I wrote any package code. Cloning the course repository failed several times because `gh` was not installed on the JupyterHub, because I typed the wrong GitHub username at first, and because a "Write access not granted" error turned out to be a token problem rather than a code problem. I got unstuck by reading each error message carefully instead of retrying the same command. The second hard part was finding the player's own birthdate. The birthdate is not in the career JS file, so I had to inspect the player's page on tennisabstract.com, where it appears as `var dob = ...;`.
+A download that works does not mean the data is complete. Nadal's career file stops in October 2016 even though he kept playing for years afterward, so I describe that limit in this README instead of leaving it out.
 
-**Testing without a live server.** I learned that tests are more reliable when they run on small, fixed inputs. The mock female and male JS snippets let me test the cleaning functions in under a second without an internet connection. Both mocks mattered because the two file formats store opponent information differently, with a birthdate for women and an age for men. One test for each format proved that both code paths work. I kept all of the network code in `fetch.py`, so everything in `clean.py` can be tested offline.
+Splitting the work into small functions helped more than I expected. The women's and men's files store opponent information differently, and each difference ended up in one small function that I could test on its own. When something broke, I knew where to look.
 
-**Small functions.** Splitting the work into small functions (`_extract_matches`, `_rows_to_frame`, `_opponent_age`, `_parse_birthdate`, and `_build_career_frame`) made each step easy to test and easy to debug. When something looked wrong, I knew exactly which function to check. Small functions kept every function well under the 20-line limit without any extra effort.
+Writing tests with mock files meant I never had to contact the website while testing, and the whole suite runs in under a second. Getting set up was the hardest part for me. Cloning the repository failed because `gh` was not installed and my token did not work at first, so I learned to read each error message carefully. I got more comfortable making small commits and checking that they reached GitHub.
 
-**The data.** I was surprised that the two file formats look so similar but differ in one important column. Rafael Nadal's career file stops in October 2016, even though he kept playing until 2024, while Serena Williams's file runs through her retirement in 2022, and that gap surprised me even more. My package follows the assignment and uses the `Career.js` files, but this taught me that a result can be correct for the data I loaded and still not match the real-world story. Checking the date range before trusting the plot was worth the extra minute.
+## Dependencies and development
 
-**Git and small commits.** Committing after every function and every set of tests made my progress easy to follow and easy to undo. I learned that mistakes stay visible in the history. One of my commits contained tests that used a function I had not imported yet, and I fixed it in the next commit instead of hiding it. Writing messages such as "Add _opponent_age for birthdate and direct-age formats" forced me to say clearly what each step did.
+Runtime dependencies are declared in `pyproject.toml`: pandas, requests, and matplotlib. The testing tool pytest is an optional dependency.
+
+As specified in HW3, this package does not need a Makefile or an `environment.yml` file.
+
+## Sources and license
+
+- Data: [Tennis Abstract](https://www.tennisabstract.com)
+- Visualization reference: the New York Times Serena Williams age comparison from HW2. The plot uses the same idea without the annotations.
+
+Package code is released under the MIT license. The code license does not grant rights to third-party data or graphics.
