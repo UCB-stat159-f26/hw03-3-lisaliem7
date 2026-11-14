@@ -28,3 +28,15 @@ def _style_axes(ax):
     ax.set_xlabel("Player's age")
     ax.set_ylabel("Player's age minus opponent's age (years)")
     ax.legend(title="Result")
+
+
+def plot_age_gap(df):
+    """Scatter plot of player age vs. age gap, colored by win/loss.
+
+    Example: plot_age_gap(get_player_matches("Serena Williams"))
+    """
+    _check_columns(df)
+    fig, ax = plt.subplots(figsize=(9, 6))
+    _scatter_by_result(ax, df)
+    _style_axes(ax)
+    return fig
