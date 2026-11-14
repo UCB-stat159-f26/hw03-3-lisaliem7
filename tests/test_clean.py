@@ -19,3 +19,13 @@ def test_extract_matches_keeps_opponent_name():
 def test_extract_matches_bad_input_raises():
     with pytest.raises(ValueError):
         _extract_matches("this is not a career file")
+
+
+def test_rows_to_frame_has_expected_columns():
+    df = _rows_to_frame(_extract_matches(FEMALE_JS))
+    assert list(df.columns) == ["date", "result", "opponent", "opp_age_or_dob"]
+
+
+def test_rows_to_frame_male_result_values():
+    df = _rows_to_frame(_extract_matches(MALE_JS))
+    assert df["result"].tolist() == ["L", "L", "W"]
