@@ -1,6 +1,6 @@
 import pytest
 from mock_data import FEMALE_JS, MALE_JS
-from tennisage.clean import _extract_matches
+from tennisage.clean import _extract_matches, _rows_to_frame
 
 
 def test_extract_matches_female_returns_three_rows():
