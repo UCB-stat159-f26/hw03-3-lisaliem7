@@ -40,3 +40,15 @@ def _parse_birthdate(page_text):
     if match is None:
         raise ValueError("Could not find the player's birthdate.")
     return pd.to_datetime(match.group(1), format="%Y%m%d")
+
+
+def _build_career_frame(js_text, player_birthdate):
+    """Turn raw career JS text into a DataFrame ready for plotting."""
+    df = _rows_to_frame(_extract_matches(js_text))
+    df["date"] = pd.to_datetime(df["date"], format="%Y%m%d")
+    df["opp_age"] = _opponent_age(df)
+    df["player_age"] = (df["date"] - player_birthdate).dt.days / 365.25
+    df["age_diff"] = df["player_age"] - df["opp_age"]
+    df["won"] = df["result"] == "W"
+    columns = ["date", "opponent", "player_age", "opp_age", "age_diff", "won"]
+    return df[columns].dropna(subset=["opp_age"])
