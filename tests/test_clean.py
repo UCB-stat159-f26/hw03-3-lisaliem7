@@ -1,7 +1,7 @@
 import pandas as pd
 import pytest
 from mock_data import FEMALE_JS, MALE_JS
-from tennisage.clean import _extract_matches, _rows_to_frame, _opponent_age, _parse_birthdate
+from tennisage.clean import _extract_matches, _rows_to_frame, _opponent_age, _parse_birthdate, _build_career_frame
 
 
 def test_extract_matches_female_returns_three_rows():
@@ -56,3 +56,19 @@ def test_parse_birthdate_reads_dob_line():
 def test_parse_birthdate_missing_raises():
     with pytest.raises(ValueError):
         _parse_birthdate("<html>no birthdate here</html>")
+
+
+def test_build_career_frame_columns():
+    df = _build_career_frame(MALE_JS, pd.Timestamp("1981-09-26"))
+    expected = ["date", "opponent", "player_age", "opp_age", "age_diff", "won"]
+    assert list(df.columns) == expected
+
+
+def test_build_career_frame_win_flags():
+    df = _build_career_frame(MALE_JS, pd.Timestamp("1981-09-26"))
+    assert df["won"].tolist() == [False, False, True]
+
+
+def test_build_career_frame_age_difference():
+    df = _build_career_frame(MALE_JS, pd.Timestamp("1981-09-26"))
+    assert df["age_diff"].iloc[0] == pytest.approx(-2.31, abs=0.05)
