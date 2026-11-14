@@ -1,4 +1,4 @@
-# Tennis Age Gap 🎾
+# Tennis Age Gap 
 
 ### Exploring Age Differences in Professional Tennis
 
