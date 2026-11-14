@@ -22,3 +22,13 @@ def _rows_to_frame(rows):
     df = pd.DataFrame(rows).iloc[:, keep]
     df.columns = ["date", "result", "opponent", "opp_age_or_dob"]
     return df
+
+
+def _opponent_age(df):
+    """Opponent age in years: from birthdate (women) or used directly (men)."""
+    raw = df["opp_age_or_dob"]
+    is_dob = raw.str.fullmatch(r"\d{8}")
+    dob = pd.to_datetime(raw.where(is_dob), format="%Y%m%d", errors="coerce")
+    age_from_dob = (df["date"] - dob).dt.days / 365.25
+    age_given = pd.to_numeric(raw.where(~is_dob), errors="coerce")
+    return age_from_dob.fillna(age_given)
