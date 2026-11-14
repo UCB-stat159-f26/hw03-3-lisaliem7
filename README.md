@@ -1,4 +1,4 @@
-# tennisage
+# Tennis Age Gap
 
 Get a tennis player's career matches from [tennisabstract.com](https://www.tennisabstract.com)
 and plot the age gap between the player and each opponent, colored by win or loss.
