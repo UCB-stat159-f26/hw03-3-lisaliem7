@@ -32,3 +32,11 @@ def _opponent_age(df):
     age_from_dob = (df["date"] - dob).dt.days / 365.25
     age_given = pd.to_numeric(raw.where(~is_dob), errors="coerce")
     return age_from_dob.fillna(age_given)
+
+
+def _parse_birthdate(page_text):
+    """Return the player's birthdate from 'var dob = 19810926;' in their page."""
+    match = re.search(r"var dob\s*=\s*(\d{8})", page_text)
+    if match is None:
+        raise ValueError("Could not find the player's birthdate.")
+    return pd.to_datetime(match.group(1), format="%Y%m%d")
